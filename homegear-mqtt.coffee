@@ -67,7 +67,7 @@ module.exports = (env) ->
 
   HomegearSwitch = require('./devices/homegear-switch')(env)
   HomegearPowerSwitch = require('./devices/homegear-power-switch')(env)
-  HomematicThermostat = require('./devices/homegear-thermostat')(env)
+  HomegearThermostat = require('./devices/homegear-thermostat')(env)
 
   # ###HomegearMqtt class
   # Create a class that extends the Plugin class and implements the following functions:
