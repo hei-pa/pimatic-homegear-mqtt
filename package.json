@@ -1,21 +1,27 @@
-{ "name": "pimatic-plugin-template",
-  "description": "The plugin description",
-  "author": "Your Name <you@example.com> (http://your-website)",
-  "main": "my-plugin",
+{
+  "name": "pimatic-homegear-mqtt",
+  "description": "Homegear mqtt plugin",
+  "author": "Pascal Heinrich <pascal@heinrich.blue>",
+  "main": "homegear-mqtt",
   "files": [
-    "my-plugin.coffee",
-    "README.md",
-    "my-plugin-config-schema.coffee"
+    "homegear-mqtt.coffee",
+    "devices/homegear-switch.coffee",
+    "devices/homegear-power-switch.coffee",
+    "devices/homegear-thermostat.coffee",
+    "homegear-mqtt-config-schema.coffee",
+    "device-config-schema.coffee",
+    "README.md"
   ],
-  "version": "0.8.0",
-  "homepage": "http://your-plugin-website",
+  "version": "0.0.1",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git://github.com/pimatic/pimatic-plugin-template.git"
+    "url": "git://github.com/hei-pa/pimatic-homegear-mqtt.git"
   },
-  "configSchema": "my-plugin-config-schema.coffee",
+  "configSchema": "homegear-mqtt-config-schema.coffee",
   "dependencies": {
+    "mqtt": "^2.16.0",
+    "rxjs": "^5.5.7"
   },
   "peerDependencies": {
     "pimatic": "0.8.*"
