@@ -99,9 +99,9 @@ module.exports = (env) ->
         createCallback: (config) => new HomegearPowerSwitch(config, controller)
       })
 
-      @framework.deviceManager.registerDeviceClass("HomematicThermostat", {
-        configDef: deviceConfigDef.HomematicThermostat
-        createCallback: (config) => new HomematicThermostat(config, controller)
+      @framework.deviceManager.registerDeviceClass("HomegearThermostat", {
+        configDef: deviceConfigDef.HomegearThermostat
+        createCallback: (config) => new HomegearThermostat(config, controller)
       })
 
       controller.connect(@config.host, @config.id)

@@ -15,8 +15,8 @@ module.exports = {
       peerId:
         description: "Homegear Device Id"
         type: "number"
-  HomematicThermostat: {
-    title: "HomematicThermostat"
+  HomegearThermostat: {
+    title: "HomegearThermostat"
     type: "object"
     properties:
       peerId:
