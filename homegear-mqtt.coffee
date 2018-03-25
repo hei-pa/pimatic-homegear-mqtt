@@ -30,7 +30,6 @@ module.exports = (env) ->
   class MqttController
 
     constructor: (@timeout) ->
-      env.logger.info(@timeout)
 
     connect: (@mqttHost, @mqttId) ->
       @mqttClient = mqtt.connect('mqtt://' + @mqttHost)
