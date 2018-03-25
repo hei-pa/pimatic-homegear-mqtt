@@ -29,6 +29,9 @@ module.exports = (env) ->
 
   class MqttController
 
+    constructor: (@timeout) ->
+      env.logger.info(@timeout)
+
     connect: (@mqttHost, @mqttId) ->
       @mqttClient = mqtt.connect('mqtt://' + @mqttHost)
 
@@ -42,15 +45,37 @@ module.exports = (env) ->
         env.logger.error(error)
       )
 
-    publish: (id, group, property, value) =>
-      topic = "homegear/#{@mqttId}/set/#{id}/#{group}/#{property}"
-      return new Promise((resolve, reject) =>
-        @mqttClient.publish(topic, value.toString(), null, (err) =>
-          if err then reject()
-          resolve(value)
-        )
-      )
 
+    publish: (id, group, property, value) =>
+
+      timeoutHandle = null
+
+      reqTopic = "homegear/#{@mqttId}/set/#{id}/#{group}/#{property}"
+      resTopic = "homegear/#{@mqttId}/jsonobj/#{id}/#{group}"
+
+      return new Rx.Observable.create((observer) =>
+
+        @mqttClient.publish(reqTopic, value.toString(), null, (error) =>
+          if error then observer.error(error)
+        )
+
+        subscription = @receiver.filter((event) =>
+          return event.topic == resTopic
+        ).subscribe((event) =>
+          if timeoutHandle? then clearTimeout(timeoutHandle)
+          observer.next(event.message[property])
+          observer.complete()
+        )
+
+        # for some reason rxjs timeout does not work
+        # thows errors around for some reason
+        timeoutHandle = setTimeout(() =>
+          env.logger.error("Timeout occured for #{reqTopic}")
+          subscription.unsubscribe()
+          observer.error("Timeout for #{property} [#{id}/#{group}]")
+        , @timeout * 1000)
+
+      ).toPromise()
 
     subscribe: (id, group) =>
       topic = "homegear/#{@mqttId}/jsonobj/#{id}/#{group}"
@@ -86,7 +111,7 @@ module.exports = (env) ->
     init: (app, @framework, @config) =>
       env.logger.info("Homegear MQTT")
 
-      controller = new MqttController
+      controller = new MqttController(@config.timeout)
       deviceConfigDef = require("./device-config-schema")
 
       @framework.deviceManager.registerDeviceClass("HomegearSwitch", {

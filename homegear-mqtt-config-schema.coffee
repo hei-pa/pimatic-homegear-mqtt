@@ -11,6 +11,10 @@ module.exports = {
       description: "MQTT Target Id (homegearId)"
       type: "string"
       default: "1234-5678-9abc"
+    timeout:
+      description: "MQTT Message Response Timeout [s]"
+      type: "number"
+      default: 10
     debug:
       description: "Output debug messages"
       type: "boolean"

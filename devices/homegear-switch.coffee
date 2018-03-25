@@ -32,8 +32,8 @@ module.exports = (env) ->
       # If state is aleady set, just return a empty promise
       if @_state is state then return Promise.resolve()
 
-      @controller.publish(@config.peerId, 1, "STATE", state).then((state) =>
-        @_setState(state)
+      return @controller.publish(@config.peerId, 1, "STATE", state).then((state) =>
+        @emit("state", @_state = state)
       )
 
     # MQTT publishes the properties on subscription and change

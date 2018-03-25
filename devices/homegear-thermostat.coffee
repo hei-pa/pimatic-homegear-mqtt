@@ -97,7 +97,7 @@ module.exports = (env) ->
       # If temperatureSetpoint is aleady set, just return a empty promise
       if @_temperatureSetpoint is temperatureSetpoint then return Promise.resolve()
 
-      @controller.publish(@config.peerId, 1, "SET_TEMPERATURE", temperatureSetpoint).then((temperatureSetpoint) =>
+      @controller.publish(@config.peerId, 4, "SET_TEMPERATURE", temperatureSetpoint).then((temperatureSetpoint) =>
         @emit("temperatureSetpoint", @_temperatureSetpoint = temperatureSetpoint)
       )
 
@@ -105,7 +105,7 @@ module.exports = (env) ->
       # If mode is aleady set, just return a empty promise
       if @_mode is mode then return Promise.resolve()
 
-      @controller.publish(@config.peerId, 1, "CONTROL_MODE", @convertModeState(mode)).then((state) =>
+      return @controller.publish(@config.peerId, 4, "CONTROL_MODE", @convertModeState(mode)).then((state) =>
         @emit("mode", @_mode = mode)
       )
 

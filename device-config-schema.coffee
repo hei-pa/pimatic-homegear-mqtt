@@ -22,7 +22,6 @@ module.exports = {
       peerId:
         description: "The Device PeerID"
         type: "number"
-        default: 1
       guiShowModeControl:
         description: "Show the mode buttons in the gui"
         type: "boolean"
