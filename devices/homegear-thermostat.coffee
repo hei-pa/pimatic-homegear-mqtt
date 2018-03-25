@@ -50,19 +50,21 @@ module.exports = (env) ->
 
     template: "thermostat"
 
+    modes = ["auto", "manu", "party", "boost"]
+
     constructor: (@config, @controller) ->
       @name = @config.name
       @id = @config.id
       super()
 
-      @subscription = @controller.subscribe(@config.peerId, 0).subscribe((message) =>
+      @subscription1 = @controller.subscribe(@config.peerId, 0).subscribe((message) =>
         env.logger.debug(@config.peerId, 0, message)
         if message.LOWBAT? then @emit("lowbat", @_lowbat = message.LOWBAT)
       )
 
-      @subscription = @controller.subscribe(@config.peerId, 4).subscribe((message) =>
+      @subscription2 = @controller.subscribe(@config.peerId, 4).subscribe((message) =>
         env.logger.debug(@config.peerId, 4, message)
-        if message.CONTROL_MODE? then       @emit("mode", @_mode = @convertStateMode(message.CONTROL_MODE))
+        if message.CONTROL_MODE? then       @emit("mode", @_mode = modes[message.CONTROL_MODE])
         if message.BATTERY_STATE? then      @emit("battery", @_battery = message.BATTERY_STATE)
         if message.SET_TEMPERATURE? then    @emit("temperatureSetpoint", @_temperatureSetpoint = message.SET_TEMPERATURE)
         if message.ACTUAL_TEMPERATURE? then @emit("temperature", @_temperature = message.ACTUAL_TEMPERATURE)
@@ -73,22 +75,9 @@ module.exports = (env) ->
     destroy: () =>
       env.logger.debug('Destroy HomematicThermostat')
       @controller.unsubscribe(@config.peerId, 1)
-      @subscription.unsubscribe()
+      @subscription1.unsubscribe()
+      @subscription2.unsubscribe()
       super()
-
-    convertStateMode: (state) =>
-      switch state
-        when 0 then return "auto"
-        when 1 then return "manu"
-        when 2 then return "party"
-        when 3 then return "boost"
-
-    convertModeState: (mode) =>
-      switch mode
-        when "auto" then return 0
-        when "manu" then return 1
-        when "party" then return 2
-        when "boost" then return 3
 
     # ####changeTemperatureTo(temperatureSetpoint)
     # The `changeTemperatureTo` function should change the temperatureSetpoint of the thermostat, when called by the
@@ -105,7 +94,14 @@ module.exports = (env) ->
       # If mode is aleady set, just return a empty promise
       if @_mode is mode then return Promise.resolve()
 
-      return @controller.publish(@config.peerId, 4, "CONTROL_MODE", @convertModeState(mode)).then((state) =>
+      switch mode
+        when "auto" then params = ["AUTO_MODE", true]
+        when "manu" then params = ["MANU_MODE", @_temperatureSetpoint]
+        when "party" then params = ["PARTY_MODE_SUBMIT", true]
+        when "boost" then params = ["BOOST_MODE", true]
+        else params = ["AUTO_MODE", true]
+
+      return @controller.publish(@config.peerId, 4, params[0], params[1]).then((state) =>
         @emit("mode", @_mode = mode)
       )
 
@@ -114,17 +110,27 @@ module.exports = (env) ->
     getTemperatureSetpoint: () ->
       return Promise.resolve(@_temperatureSetpoint)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getTemperature: () ->
       return Promise.resolve(@_temperature)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getValve: () ->
       return Promise.resolve(@_valve)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getMode: () ->
       return Promise.resolve(@_mode)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getBattery: () ->
       return Promise.resolve(@_battery)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getLowbat: () ->
       return Promise.resolve(@_lowbat)

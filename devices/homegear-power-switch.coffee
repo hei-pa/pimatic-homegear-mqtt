@@ -71,17 +71,27 @@ module.exports = (env) ->
     getCurrent: () ->
       return Promise.resolve(@_current)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getVoltage: () ->
       return Promise.resolve(@_voltage)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getFrequency: () ->
       return Promise.resolve(@_frequency)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getEnergy: () ->
       return Promise.resolve(@_energy)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getPower: () ->
       return Promise.resolve(@_power)
 
+    # MQTT publishes the properties on subscription and change
+    # so there is no need to request it
     getState: () ->
       return Promise.resolve(@_state)
