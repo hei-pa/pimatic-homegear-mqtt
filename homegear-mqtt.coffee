@@ -32,6 +32,7 @@ module.exports = (env) ->
     constructor: (@timeout) ->
 
     connect: (@mqttHost, @mqttId) ->
+
       @mqttClient = mqtt.connect('mqtt://' + @mqttHost)
 
       @receiver = Rx.Observable.fromEvent(@mqttClient, "message", (topic, message) => ({topic, message: JSON.parse(message)}))
@@ -44,42 +45,46 @@ module.exports = (env) ->
         env.logger.error(error)
       )
 
-
     publish: (id, group, property, value) =>
-
-      timeoutHandle = null
 
       reqTopic = "homegear/#{@mqttId}/set/#{id}/#{group}/#{property}"
       resTopic = "homegear/#{@mqttId}/jsonobj/#{id}/#{group}"
 
-      return new Rx.Observable.create((observer) =>
+      return new Promise((resolve, reject) =>
 
-        @mqttClient.publish(reqTopic, value.toString(), null, (error) =>
-          if error then observer.error(error)
-        )
+        setTimeout( =>
 
-        subscription = @receiver.filter((event) =>
-          return event.topic == resTopic
-        ).subscribe((event) =>
-          if timeoutHandle? then clearTimeout(timeoutHandle)
-          observer.next(event.message[property])
-          observer.complete()
-        )
+          @mqttClient.publish(reqTopic, value.toString(), null, (error) =>
+            if error
+              reject(error.message)
+              env.logger.error("MQTT error for #{reqTopic}")
+            else
+              env.logger.debug("Request #{reqTopic} sent")
+          )
 
-        # for some reason rxjs timeout does not work
-        # thows errors around for some reason
-        timeoutHandle = setTimeout(() =>
-          env.logger.error("Timeout occured for #{reqTopic}")
-          subscription.unsubscribe()
-          observer.error("Timeout for #{property} [#{id}/#{group}]")
-        , @timeout * 1000)
+          @receiver.filter((event) =>
+            return event.topic == resTopic
+          ).timeout(@timeout * 1000).first().subscribe((event) =>
+            env.logger.debug("Response for #{resTopic} received")
+            resolve(event.message[property])
+          , (error) =>
+            env.logger.error("Error for #{resTopic}: #{error.message}")
+            reject("#{resTopic}\n#{error.message}")
+          , () =>
+            env.logger.debug("Request for #{reqTopic} completed")
+          )
 
-      ).toPromise()
+        , (Math.random() * 2000) + 500)
+
+      )
 
     subscribe: (id, group) =>
+
       topic = "homegear/#{@mqttId}/jsonobj/#{id}/#{group}"
+
       env.logger.debug("Subscribing to #{topic}")
       @mqttClient.subscribe(topic)
+
       return @receiver.filter((event) =>
         return event.topic == topic
       ).map((event) =>
