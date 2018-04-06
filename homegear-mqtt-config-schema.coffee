@@ -14,7 +14,7 @@ module.exports = {
     delay:
       description: "MQTT Message Send Delay [ms]"
       type: "number"
-      default: 300
+      default: 1000
     timeout:
       description: "MQTT Message Response Timeout [s]"
       type: "number"
