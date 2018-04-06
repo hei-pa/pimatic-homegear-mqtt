@@ -29,7 +29,9 @@ module.exports = (env) ->
 
   class MqttController
 
-    constructor: (@timeout) ->
+    lastRequest = new Date()
+
+    constructor: (@requestTimeout, @requestDelay) ->
 
     connect: (@mqttHost, @mqttId) ->
 
@@ -50,6 +52,17 @@ module.exports = (env) ->
       reqTopic = "homegear/#{@mqttId}/set/#{id}/#{group}/#{property}"
       resTopic = "homegear/#{@mqttId}/jsonobj/#{id}/#{group}"
 
+      timeout = 0
+      diff = new Date() - lastRequest
+
+      if (diff < @requestDelay)
+        timeout = @requestDelay - diff
+
+      lastRequest = new Date()
+      lastRequest.setMilliseconds(lastRequest.getMilliseconds() + timeout)
+
+      env.logger.debug("Request Timeout #{timeout}ms")
+
       return new Promise((resolve, reject) =>
 
         setTimeout( =>
@@ -64,17 +77,17 @@ module.exports = (env) ->
 
           @receiver.filter((event) =>
             return event.topic == resTopic
-          ).timeout(@timeout * 1000).first().subscribe((event) =>
+          ).timeout(@requestTimeout * 1000).first().subscribe((event) =>
             env.logger.debug("Response for #{resTopic} received")
             resolve(event.message[property])
           , (error) =>
             env.logger.error("Error for #{resTopic}: #{error.message}")
             reject("#{resTopic}\n#{error.message}")
           , () =>
-            env.logger.debug("Request for #{reqTopic} completed")
+            env.logger.debug("=> #{reqTopic} completed")
           )
 
-        , (Math.random() * 2000) + 500)
+        , timeout)
 
       )
 
@@ -115,7 +128,7 @@ module.exports = (env) ->
     init: (app, @framework, @config) =>
       env.logger.info("Homegear MQTT")
 
-      controller = new MqttController(@config.timeout)
+      controller = new MqttController(@config.timeout, @config.delay)
       deviceConfigDef = require("./device-config-schema")
 
       @framework.deviceManager.registerDeviceClass("HomegearSwitch", {
